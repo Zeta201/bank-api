@@ -32,7 +32,7 @@ func main() {
 
 	// Add this before defining routes in `main.go`
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // or use env var
+		AllowOrigins:     []string{"*"}, // or use env var
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
