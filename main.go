@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,12 +30,12 @@ func main() {
 	r := gin.Default()
 
 	// Add this before defining routes in `main.go`
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // or use env var
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true,
-	}))
+	// r.Use(cors.New(cors.Config{
+	// 	AllowOrigins:     []string{"*"}, // or use env var
+	// 	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	// 	AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+	// 	AllowCredentials: true,
+	// }))
 
 	// Dummy base URL endpoint
 	r.GET("/", func(c *gin.Context) {
