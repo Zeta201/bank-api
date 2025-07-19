@@ -17,7 +17,7 @@ configurations:
         configForm:
           displayName: Database User
           type: string
-    - name: DB_PASS
+    - name: DB_PASSWORD
       valueFrom:
         configForm:
           displayName: Database Password

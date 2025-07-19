@@ -5,7 +5,6 @@ import (
 	"bank-app/handlers"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv" // Import godotenv to load environment variables
@@ -46,10 +45,7 @@ func main() {
 	r.GET("/accounts/:account_no/transactions", handlers.GetTransactionsByAccountNo)
 
 	// Start the server
-	port := os.Getenv("PORT")
-	fmt.Println("Starting server on port:", port)
-	if port == "" {
-		port = "7070" // Default port if not set in .env
-	}
+	port := "7070" // Default port if not set in .env
+
 	r.Run(fmt.Sprintf(":%s", port))
 }
