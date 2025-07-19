@@ -1,0 +1,33 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Output of go build
+/build/
+*.out
+
+# Vendor directory (if you're not vendoring dependencies)
+vendor/
+
+# IDE/editor configs
+.vscode/
+.idea/
+*.swp
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Log files
+*.log
+
+# Dependency directories (node, Python, etc.)
+node_modules/
