@@ -5,17 +5,20 @@ import (
 	"bank-app/handlers"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv" // Import godotenv to load environment variables
 )
 
 func init() {
-	// Load the .env file at the start
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// If running locally, you may still want to load the .env file.
+	// Uncomment the following lines if you want to keep godotenv loading for local development.
+	// if os.Getenv("ENV") != "production" {
+	//     err := godotenv.Load()
+	//     if err != nil {
+	//         log.Fatal("Error loading .env file")
+	//     }
+	// }
 }
 
 func main() {
@@ -44,8 +47,15 @@ func main() {
 	r.GET("/users/:id/transactions", handlers.GetTransactionsByUserID)
 	r.GET("/accounts/:account_no/transactions", handlers.GetTransactionsByAccountNo)
 
-	// Start the server
-	port := "7070" // Default port if not set in .env
+	// Start the server on the port from the environment or default to 7070
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "7070" // Default port if not set in Choreo environment variables
+	}
 
-	r.Run(fmt.Sprintf(":%s", port))
+	// Start the Gin server
+	err := r.Run(fmt.Sprintf(":%s", port))
+	if err != nil {
+		log.Fatal("Failed to start server: ", err)
+	}
 }
