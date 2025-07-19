@@ -1,0 +1,39 @@
+schemaVersion: 1.2
+
+endpoints:
+  - name: bank-api
+    displayName: Go API
+    service:
+      basePath: /api
+      port: 7070   # change this to match the port your Go API listens on
+    type: REST
+    networkVisibilities: 
+      - Public
+
+configurations:
+  env:
+    - name: DB_USER
+      valueFrom:
+        configForm:
+          displayName: Database User
+          type: string
+    - name: DB_PASS
+      valueFrom:
+        configForm:
+          displayName: Database Password
+          type: secret
+    - name: DB_HOST
+      valueFrom:
+        configForm:
+          displayName: Database Host
+          type: string
+    - name: DB_PORT
+      valueFrom:
+        configForm:
+          displayName: Database Port
+          type: string
+    - name: DB_NAME
+      valueFrom:
+        configForm:
+          displayName: Database Name
+          type: string
