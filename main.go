@@ -3,21 +3,25 @@ package main
 import (
 	"bank-app/config"
 	"bank-app/handlers"
+	"bank-app/middleware"
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func init() {
 	// If running locally, you may still want to load the .env file.
 	// Uncomment the following lines if you want to keep godotenv loading for local development.
-	// if os.Getenv("ENV") != "production" {
-	//     err := godotenv.Load()
-	//     if err != nil {
-	//         log.Fatal("Error loading .env file")
-	//     }
-	// }
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
+	}
 }
 
 func main() {
@@ -28,6 +32,14 @@ func main() {
 	// Set up the Gin router
 	r := gin.Default()
 
+	// Add this before defining routes in `main.go`
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // or use env var
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
+
 	// Dummy base URL endpoint
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -35,23 +47,29 @@ func main() {
 		})
 	})
 
+	r.POST("/signup", handlers.SignUp)
+	r.POST("/login", handlers.Login)
+
+	auth := r.Group("/")
+	auth.Use(middleware.JWTAuthMiddleware())
+
 	// Routes for users
-	r.POST("/users", handlers.CreateUser)
-	r.GET("/users/:id", handlers.GetUserByID)
+	// r.POST("/users", handlers.CreateUser)
+	auth.GET("/users/:id", handlers.GetUserByID)
+	auth.GET("/accounts", handlers.GetAllAccounts)
 
 	// Routes for accounts
-	r.POST("/accounts", handlers.CreateAccount)
-	r.DELETE("/accounts/:account_no", handlers.DeleteAccount)
-	r.POST("/accounts/:account_no/deposit", handlers.Deposit)
-	r.POST("/accounts/:account_no/withdraw", handlers.Withdraw)
+	auth.POST("/accounts", handlers.CreateAccount)
+	auth.POST("/accounts/:account_no/deposit", handlers.Deposit)
+	auth.POST("/accounts/:account_no/withdraw", handlers.Withdraw)
 
 	// Update the transfer route to avoid conflict
-	r.POST("/accounts/transfer/:from_account/:to_account", handlers.Transfer)
+	auth.POST("/accounts/transfer/:from_account/:to_account", handlers.Transfer)
 
-	r.GET("/transactions", handlers.GetAllTransactions)
-	r.GET("/transactions/:id", handlers.GetTransactionByID)
-	r.GET("/users/:id/transactions", handlers.GetTransactionsByUserID)
-	r.GET("/accounts/:account_no/transactions", handlers.GetTransactionsByAccountNo)
+	// auth.GET("/transactions", handlers.GetAllTransactions)
+	auth.GET("/transactions/:id", handlers.GetTransactionByID)
+	auth.GET("/users/:id/transactions", handlers.GetTransactionsByUserID)
+	auth.GET("/accounts/:account_no/transactions", handlers.GetTransactionsByAccountNo)
 
 	// Start the server on the port from the environment or default to 7070
 	port := "8080"
