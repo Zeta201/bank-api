@@ -5,7 +5,6 @@ import (
 	"bank-app/handlers"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,10 +47,7 @@ func main() {
 	r.GET("/accounts/:account_no/transactions", handlers.GetTransactionsByAccountNo)
 
 	// Start the server on the port from the environment or default to 7070
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "7070" // Default port if not set in Choreo environment variables
-	}
+	port := "8080"
 
 	// Start the Gin server
 	err := r.Run(fmt.Sprintf(":%s", port))
