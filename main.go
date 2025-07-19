@@ -28,6 +28,13 @@ func main() {
 	// Set up the Gin router
 	r := gin.Default()
 
+	// Dummy base URL endpoint
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Welcome to the Bank API",
+		})
+	})
+
 	// Routes for users
 	r.POST("/users", handlers.CreateUser)
 	r.GET("/users/:id", handlers.GetUserByID)
