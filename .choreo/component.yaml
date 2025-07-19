@@ -5,7 +5,7 @@ endpoints:
     displayName: Go API
     service:
       basePath: /api
-      port: 7070   # change this to match the port your Go API listens on
+      port: 8080   # change this to match the port your Go API listens on
     type: REST
     networkVisibilities: 
       - Public
