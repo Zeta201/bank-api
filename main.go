@@ -6,23 +6,21 @@ import (
 	"bank-app/middleware"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
-func init() {
-	// If running locally, you may still want to load the .env file.
-	// Uncomment the following lines if you want to keep godotenv loading for local development.
-	if os.Getenv("ENV") != "production" {
-		err := godotenv.Load()
-		if err != nil {
-			log.Fatal("Error loading .env file")
-		}
-	}
-}
+// func init() {
+// 	// If running locally, you may still want to load the .env file.
+// 	// Uncomment the following lines if you want to keep godotenv loading for local development.
+// 	if os.Getenv("ENV") != "production" {
+// 		err := godotenv.Load()
+// 		if err != nil {
+// 			log.Fatal("Error loading .env file")
+// 		}
+// 	}
+// }
 
 func main() {
 	// Connect to the database
