@@ -5,10 +5,60 @@ endpoints:
     displayName: Go API
     service:
       basePath: /
-      port: 8080   # change this to match the port your Go API listens on
+      port: 8080
     type: REST
     networkVisibilities: 
       - Public
+    context: /
+    routes:
+      - path: /
+        method: GET
+        displayName: Welcome Message
+        description: Returns a welcome message for the Bank API.
+      - path: /signup
+        method: POST
+        displayName: User Signup
+        description: Endpoint to create a new user account.
+      - path: /login
+        method: POST
+        displayName: User Login
+        description: Authenticates a user and returns a JWT token.
+      - path: /users/{id}
+        method: GET
+        displayName: Get User by ID
+        description: Returns user details for a given ID.
+      - path: /accounts
+        method: GET
+        displayName: Get All Accounts
+        description: Lists all accounts for the authenticated user.
+      - path: /accounts
+        method: POST
+        displayName: Create Account
+        description: Creates a new account for the authenticated user.
+      - path: /accounts/{account_no}/deposit
+        method: POST
+        displayName: Deposit to Account
+        description: Deposits funds into the specified account.
+      - path: /accounts/{account_no}/withdraw
+        method: POST
+        displayName: Withdraw from Account
+        description: Withdraws funds from the specified account.
+      - path: /accounts/transfer/{from_account}/{to_account}
+        method: POST
+        displayName: Transfer Between Accounts
+        description: Transfers funds from one account to another.
+      - path: /transactions/{id}
+        method: GET
+        displayName: Get Transaction by ID
+        description: Retrieves transaction details by transaction ID.
+      - path: /users/{id}/transactions
+        method: GET
+        displayName: Get Transactions by User ID
+        description: Gets all transactions associated with a user.
+      - path: /accounts/{account_no}/transactions
+        method: GET
+        displayName: Get Transactions by Account Number
+        description: Retrieves all transactions for a specific account.
 
 configurations:
   env:
