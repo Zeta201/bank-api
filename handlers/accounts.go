@@ -22,24 +22,21 @@ func GenerateUniqueAccountNumber() string {
 }
 
 func CreateAccount(c *gin.Context) {
-	var accountRequest struct {
-		AccountType    string  `json:"account_type"`
-		InitialBalance float64 `json:"initial_balance"`
-	}
+	var accountRequest models.AccountRequest
 
 	if err := c.ShouldBindJSON(&accountRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Invalid input"})
 		return
 	}
 
 	if accountRequest.InitialBalance < 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Initial balance cannot be negative"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Initial balance cannot be negative"})
 		return
 	}
 
 	validTypes := map[string]bool{"savings": true, "checking": true}
 	if !validTypes[accountRequest.AccountType] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid account type"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Invalid account type"})
 		return
 	}
 
@@ -47,14 +44,14 @@ func CreateAccount(c *gin.Context) {
 
 	var user models.User
 	if err := config.DB.First(&user, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, models.ErrorResponse{Message: "User not found"})
 		return
 	}
 
 	// Check if this account type already exists for the user
 	var existing models.Account
 	if err := config.DB.Where("user_id = ? AND account_type = ?", userID, accountRequest.AccountType).First(&existing).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Account type already exists"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Account type already exists"})
 		return
 	}
 
@@ -66,15 +63,16 @@ func CreateAccount(c *gin.Context) {
 	}
 
 	if err := config.DB.Create(&account).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to create account"})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":    "Account created successfully",
-		"account_id": account.ID,
-		"account_no": account.AccountNo,
-		"balance":    account.Balance,
+		"message":      "Account created successfully",
+		"account_id":   account.ID,
+		"account_no":   account.AccountNo,
+		"balance":      account.Balance,
+		"account_type": account.AccountType,
 	})
 }
 
@@ -101,9 +99,8 @@ func CreateAccount(c *gin.Context) {
 
 func Deposit(c *gin.Context) {
 	accountNo := c.Param("account_no")
-	var request struct {
-		Amount float64 `json:"amount"`
-	}
+
+	var request models.AmountRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid amount"})

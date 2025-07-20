@@ -33,7 +33,6 @@ func ConnectDB() {
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"),
 	)
-
 	// Open the database connection
 	DB, err = gorm.Open("mysql", dsn)
 	if err != nil {
