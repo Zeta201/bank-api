@@ -10,47 +10,6 @@ endpoints:
     type: REST
     networkVisibilities:
       - Public
-
-  - name: auth
-    displayName: Authentication
-    context: /auth
-    service:
-      basePath: /
-      port: 8080
-    type: REST
-    networkVisibilities:
-      - Public
-
-  - name: users
-    displayName: User Management
-    context: /users
-    service:
-      basePath: /
-      port: 8080
-    type: REST
-    networkVisibilities:
-      - Public
-
-  - name: accounts
-    displayName: Account Management
-    context: /accounts
-    service:
-      basePath: /
-      port: 8080
-    type: REST
-    networkVisibilities:
-      - Public
-
-  - name: transactions
-    displayName: Transaction Management
-    context: /transactions
-    service:
-      basePath: /
-      port: 8080
-    type: REST
-    networkVisibilities:
-      - Public
-
 configurations:
   env:
     - name: DB_USER
