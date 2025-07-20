@@ -1,14 +1,13 @@
 schemaVersion: 1.2
 
 endpoints:
-  - name: welcome
-    displayName: Welcome Endpoint
-    context: /
+  - name: bank-api
+    displayName: Go API
     service:
       basePath: /
-      port: 8080
+      port: 8080   # change this to match the port your Go API listens on
     type: REST
-    networkVisibilities:
+    networkVisibilities: 
       - Public
 configurations:
   env:
