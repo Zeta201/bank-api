@@ -7,7 +7,7 @@ import (
 )
 
 type Transaction struct {
-	gorm.Model
+	gorm.Model      `swaggerignore:"true"`
 	TransactionType string    `json:"transaction_type"` // Deposit, Withdrawal, Transfer
 	Amount          float64   `json:"amount"`
 	AccountID       uint      `json:"account_id"`                // Account that initiated the transaction

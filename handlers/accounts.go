@@ -21,6 +21,18 @@ func GenerateUniqueAccountNumber() string {
 	}
 }
 
+// @Summary      Create a new bank account
+// @Description  Creates a new savings or checking account for the authenticated user
+// @Tags         Accounts
+// @Accept       json
+// @Produce      json
+// @Param        account  body      models.AccountRequest           true  "Account details"
+// @Success      201      {object}  models.AccountCreatedResponse
+// @Failure      400      {object}  models.ErrorResponse
+// @Failure      404      {object}  models.ErrorResponse
+// @Failure      500      {object}  models.ErrorResponse
+// @Security     BearerAuth
+// @Router       /accounts [post]
 func CreateAccount(c *gin.Context) {
 	var accountRequest models.AccountRequest
 
@@ -67,57 +79,49 @@ func CreateAccount(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message":      "Account created successfully",
-		"account_id":   account.ID,
-		"account_no":   account.AccountNo,
-		"balance":      account.Balance,
-		"account_type": account.AccountType,
+	c.JSON(http.StatusCreated, models.AccountCreatedResponse{
+		Message:     "Account created successfully",
+		AccountID:   account.ID,
+		AccountNo:   account.AccountNo,
+		Balance:     account.Balance,
+		AccountType: account.AccountType,
 	})
 }
 
-// func DeleteAccount(c *gin.Context) {
-// 	accountNo := c.Param("account_no")
-// 	var account models.Account
-
-// 	if err := config.DB.Where("account_no = ?", accountNo).First(&account).Error; err != nil {
-// 		if err == gorm.ErrRecordNotFound {
-// 			c.JSON(http.StatusNotFound, gin.H{"error": "Account not found"})
-// 		} else {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find account"})
-// 		}
-// 		return
-// 	}
-
-// 	if err := config.DB.Delete(&account).Error; err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete account"})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"message": "Account deleted successfully"})
-// }
-
+// @Summary      Deposit money into an account
+// @Description  Deposits a specified amount into the account identified by its account number
+// @Tags         Transactions
+// @Accept       json
+// @Produce      json
+// @Param        account_no  path      string                     true  "Account number"
+// @Param        request     body      models.TransactionRequest  true  "Deposit amount"
+// @Success      200         {object}  models.TransactionResponse
+// @Failure      400         {object}  models.ErrorResponse
+// @Failure      404         {object}  models.ErrorResponse
+// @Failure      500         {object}  models.ErrorResponse
+// @Security     BearerAuth
+// @Router       /accounts/{account_no}/deposit [post]
 func Deposit(c *gin.Context) {
 	accountNo := c.Param("account_no")
 
-	var request models.AmountRequest
+	var request models.TransactionRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid amount"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Invalid amount"})
 		return
 	}
 
 	// Find the account
 	var account models.Account
 	if err := config.DB.Where("account_no = ?", accountNo).First(&account).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Account not found"})
+		c.JSON(http.StatusNotFound, models.ErrorResponse{Message: "Account not found"})
 		return
 	}
 
 	// Add the deposit amount to the balance
 	account.Balance += request.Amount
 	if err := config.DB.Save(&account).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update balance"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to update balance"})
 		return
 	}
 
@@ -130,24 +134,35 @@ func Deposit(c *gin.Context) {
 		TransactionDate: time.Now(),
 	}
 	if err := config.DB.Create(&transaction).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log transaction"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to log transaction"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Deposit successful",
-		"balance": account.Balance,
+	c.JSON(http.StatusOK, models.TransactionResponse{
+		Message: "Deposit successful",
+		Balance: account.Balance,
 	})
 }
 
+// @Summary      Withdraw money from an account
+// @Description  Withdraws a specified amount from the authenticated user's account
+// @Tags         Transactions
+// @Accept       json
+// @Produce      json
+// @Param        account_no  path      string                     true  "Account number"
+// @Param        request     body      models.TransactionRequest  true  "Withdrawal amount"
+// @Success      200         {object}  models.TransactionResponse
+// @Failure      400         {object}  models.ErrorResponse
+// @Failure      403         {object}  models.ErrorResponse
+// @Failure      500         {object}  models.ErrorResponse
+// @Security     BearerAuth
+// @Router       /accounts/{account_no}/withdraw [post]
 func Withdraw(c *gin.Context) {
 	accountNo := c.Param("account_no")
-	var request struct {
-		Amount float64 `json:"amount"`
-	}
+	var request models.TransactionRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil || request.Amount <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or missing amount"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Invalid or missing amount"})
 		return
 	}
 
@@ -157,20 +172,20 @@ func Withdraw(c *gin.Context) {
 	// Find the account AND ensure it belongs to the authenticated user
 	var account models.Account
 	if err := config.DB.Where("account_no = ? AND user_id = ?", accountNo, userID).First(&account).Error; err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Account not found or access denied"})
+		c.JSON(http.StatusForbidden, models.ErrorResponse{Message: "Account not found or access denied"})
 		return
 	}
 
 	// Check if the account has enough balance
 	if account.Balance < request.Amount {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient balance"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Insufficient balance"})
 		return
 	}
 
 	// Deduct the amount
 	account.Balance -= request.Amount
 	if err := config.DB.Save(&account).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update balance"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to update balance"})
 		return
 	}
 
@@ -184,26 +199,39 @@ func Withdraw(c *gin.Context) {
 	}
 
 	if err := config.DB.Create(&transaction).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log transaction"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to log transaction"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Withdrawal successful",
-		"balance": account.Balance,
+	c.JSON(http.StatusOK, models.TransactionResponse{
+		Message: "Withdrawal successful",
+		Balance: account.Balance,
 	})
 }
 
+// @Summary      Transfer money between accounts
+// @Description  Transfer a specified amount from one account to another
+// @Tags         Transactions
+// @Accept       json
+// @Produce      json
+// @Param        from_account  path      string                     true  "Sender's account number"
+// @Param        to_account    path      string                     true  "Receiver's account number"
+// @Param        request       body      models.TransactionRequest  true  "Transfer amount"
+// @Success      200           {object}  models.TransactionResponse
+// @Failure      400           {object}  models.ErrorResponse
+// @Failure      403           {object}  models.ErrorResponse
+// @Failure      404           {object}  models.ErrorResponse
+// @Failure      500           {object}  models.ErrorResponse
+// @Security     BearerAuth
+// @Router       /accounts/{from_account}/transfer/{to_account} [post]
 func Transfer(c *gin.Context) {
 	fromAccountNo := c.Param("from_account")
 	toAccountNo := c.Param("to_account")
 
-	var request struct {
-		Amount float64 `json:"amount"`
-	}
+	var request models.TransactionRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil || request.Amount <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or missing amount"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Invalid or missing amount"})
 		return
 	}
 
@@ -212,26 +240,26 @@ func Transfer(c *gin.Context) {
 	// Ensure the 'from' account belongs to the logged-in user
 	var fromAccount models.Account
 	if err := config.DB.Where("account_no = ? AND user_id = ?", fromAccountNo, userID).First(&fromAccount).Error; err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have access to this account"})
+		c.JSON(http.StatusForbidden, models.ErrorResponse{Message: "You do not have access to this account"})
 		return
 	}
 
 	// Lookup receiver's account
 	var toAccount models.Account
 	if err := config.DB.Where("account_no = ?", toAccountNo).First(&toAccount).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Receiver account not found"})
+		c.JSON(http.StatusNotFound, models.ErrorResponse{Message: "Receiver account not found"})
 		return
 	}
 
 	// Prevent transferring to the same account
 	if fromAccount.AccountNo == toAccount.AccountNo {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot transfer to the same account"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Cannot transfer to the same account"})
 		return
 	}
 
 	// Check sufficient balance
 	if fromAccount.Balance < request.Amount {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient balance"})
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Insufficient balance"})
 		return
 	}
 
@@ -243,12 +271,12 @@ func Transfer(c *gin.Context) {
 	tx := config.DB.Begin()
 	if err := tx.Save(&fromAccount).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update sender account"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to update sender account"})
 		return
 	}
 	if err := tx.Save(&toAccount).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update receiver account"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to update receiver account"})
 		return
 	}
 
@@ -264,7 +292,7 @@ func Transfer(c *gin.Context) {
 	}
 	if err := tx.Create(&transactionFrom).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log sender transaction"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to log sender transaction"})
 		return
 	}
 
@@ -280,29 +308,38 @@ func Transfer(c *gin.Context) {
 	}
 	if err := tx.Create(&transactionTo).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log receiver transaction"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to log receiver transaction"})
 		return
 	}
 
 	// Commit transaction
 	tx.Commit()
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Transfer successful",
-		"balance": fromAccount.Balance,
+	c.JSON(http.StatusOK, models.TransactionResponse{
+		Message: "Transfer successful",
+		Balance: fromAccount.Balance,
 	})
 }
 
+// @Summary      Get all accounts for authenticated user
+// @Description  Retrieves a list of all bank accounts belonging to the authenticated user
+// @Tags         Accounts
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  models.AccountsResponse
+// @Failure      500  {object}  models.ErrorResponse
+// @Security     BearerAuth
+// @Router       /accounts [get]
 func GetAllAccounts(c *gin.Context) {
 	userID := c.MustGet("userID").(uint)
 
 	var accounts []models.Account
 	if err := config.DB.Where("user_id = ?", userID).Find(&accounts).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve accounts"})
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to retrieve accounts"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"accounts": accounts,
+	c.JSON(http.StatusOK, models.AccountsResponse{
+		Accounts: accounts,
 	})
 }

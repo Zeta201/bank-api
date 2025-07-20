@@ -72,6 +72,17 @@ func SignUp(c *gin.Context) {
 	)
 }
 
+// @Summary      Login a user
+// @Description  Login a user in the banking system
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        user  body      models.LoginRequest  true  "Login credentials"
+// @Success 	 200   {object}  models.LoginResponse
+// @Failure      400   {object}  models.ErrorResponse
+// @Failure      401   {object}  models.ErrorResponse
+// @Failure      500   {object}  models.ErrorResponse
+// @Router       /login [post]
 func Login(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -98,10 +109,10 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"token":   token,
-		"user": models.UserResponse{
+	c.JSON(http.StatusOK, models.LoginResponse{
+		Message: "Login successful",
+		Token:   token,
+		User: models.UserResponse{
 			ID:        user.ID,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,

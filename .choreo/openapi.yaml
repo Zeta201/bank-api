@@ -1,0 +1,515 @@
+openapi: 3.0.0
+info:
+  contact: {}
+  description: This is a banking system API for key banking operations.
+  title: Banking API
+  version: "1.0"
+paths:
+  /accounts:
+    get:
+      description: Retrieves a list of all bank accounts belonging to the authenticated user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.AccountsResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Get all accounts for authenticated user
+      tags:
+        - Accounts
+    post:
+      description: Creates a new savings or checking account for the authenticated user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/models.AccountRequest"
+        description: Account details
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.AccountCreatedResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Create a new bank account
+      tags:
+        - Accounts
+  "/accounts/{account_no}/deposit":
+    post:
+      description: Deposits a specified amount into the account identified by its
+        account number
+      parameters:
+        - description: Account number
+          in: path
+          name: account_no
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/models.TransactionRequest"
+        description: Deposit amount
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.TransactionResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Deposit money into an account
+      tags:
+        - Transactions
+  "/accounts/{account_no}/transactions":
+    get:
+      description: Retrieves all transactions for a specific account number.
+      parameters:
+        - description: Account Number
+          in: path
+          name: account_no
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/models.Transaction"
+                type: array
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Failed to fetch transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      summary: Get transactions by account number
+      tags:
+        - transactions
+  "/accounts/{account_no}/withdraw":
+    post:
+      description: Withdraws a specified amount from the authenticated user's account
+      parameters:
+        - description: Account number
+          in: path
+          name: account_no
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/models.TransactionRequest"
+        description: Withdrawal amount
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.TransactionResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Withdraw money from an account
+      tags:
+        - Transactions
+  "/accounts/{from_account}/transfer/{to_account}":
+    post:
+      description: Transfer a specified amount from one account to another
+      parameters:
+        - description: Sender's account number
+          in: path
+          name: from_account
+          required: true
+          schema:
+            type: string
+        - description: Receiver's account number
+          in: path
+          name: to_account
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/models.TransactionRequest"
+        description: Transfer amount
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.TransactionResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Transfer money between accounts
+      tags:
+        - Transactions
+  /login:
+    post:
+      description: Login a user in the banking system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/models.LoginRequest"
+        description: Login credentials
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.LoginResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      summary: Login a user
+      tags:
+        - Auth
+  /signup:
+    post:
+      description: Register a new user in the banking system
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/models.SignUpRequest"
+        description: User Info
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.UserResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      summary: Sign up a new user
+      tags:
+        - Auth
+  "/transactions/{id}":
+    get:
+      description: Retrieve transaction details by transaction ID
+      parameters:
+        - description: Transaction ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.Transaction"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      security:
+        - BearerAuth: []
+      summary: Get transaction by ID
+      tags:
+        - Transactions
+  "/users/{id}/transactions":
+    get:
+      description: Retrieves all transactions for all accounts belonging to a specific user.
+      parameters:
+        - description: User ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/models.Transaction"
+                type: array
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+        "500":
+          description: Failed to fetch transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/models.ErrorResponse"
+      summary: Get transactions by user ID
+      tags:
+        - transactions
+servers:
+  - url: //localhost:8080/api/v1
+components:
+  schemas:
+    models.Account:
+      properties:
+        account_no:
+          type: string
+        account_type:
+          type: string
+        balance:
+          type: number
+        user_id:
+          type: integer
+      type: object
+    models.AccountCreatedResponse:
+      properties:
+        account_id:
+          type: integer
+        account_no:
+          type: string
+        account_type:
+          type: string
+        balance:
+          type: number
+        message:
+          type: string
+      type: object
+    models.AccountRequest:
+      properties:
+        account_type:
+          type: string
+        initial_balance:
+          type: number
+      type: object
+    models.AccountsResponse:
+      properties:
+        accounts:
+          items:
+            $ref: "#/components/schemas/models.Account"
+          type: array
+      type: object
+    models.ErrorResponse:
+      properties:
+        message:
+          type: string
+      type: object
+    models.LoginRequest:
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+      type: object
+    models.LoginResponse:
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/models.UserResponse"
+      type: object
+    models.SignUpRequest:
+      properties:
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        password:
+          minLength: 8
+          type: string
+      required:
+        - email
+        - first_name
+        - last_name
+        - password
+      type: object
+    models.Transaction:
+      properties:
+        account_id:
+          description: Account that initiated the transaction
+          type: integer
+        amount:
+          type: number
+        from_account_id:
+          description: For transfers, the originating account
+          type: integer
+        status:
+          description: Success or failure
+          type: string
+        to_account_id:
+          description: For transfers, the receiving account
+          type: integer
+        transaction_date:
+          type: string
+        transaction_type:
+          description: Deposit, Withdrawal, Transfer
+          type: string
+      type: object
+    models.TransactionRequest:
+      properties:
+        amount:
+          type: number
+      type: object
+    models.TransactionResponse:
+      properties:
+        balance:
+          type: number
+        message:
+          type: string
+      type: object
+    models.UserResponse:
+      properties:
+        email:
+          type: string
+        first_name:
+          type: string
+        id:
+          type: integer
+        last_name:
+          type: string
+      type: object

@@ -10,17 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// func init() {
-// 	// If running locally, you may still want to load the .env file.
-// 	// Uncomment the following lines if you want to keep godotenv loading for local development.
-// 	if os.Getenv("ENV") != "production" {
-// 		err := godotenv.Load()
-// 		if err != nil {
-// 			log.Fatal("Error loading .env file")
-// 		}
-// 	}
-// }
-
+// @title           Banking API
+// @version         1.0
+// @description     This is a banking system API for key banking operations.
+// @host            localhost:8080
+// @BasePath        /api/v1
 func main() {
 	// Connect to the database
 	config.ConnectDB()
@@ -77,3 +71,14 @@ func main() {
 		log.Fatal("Failed to start server: ", err)
 	}
 }
+
+// func init() {
+// 	// If running locally, you may still want to load the .env file.
+// 	// Uncomment the following lines if you want to keep godotenv loading for local development.
+// 	if os.Getenv("ENV") != "production" {
+// 		err := godotenv.Load()
+// 		if err != nil {
+// 			log.Fatal("Error loading .env file")
+// 		}
+// 	}
+// }
