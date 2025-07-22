@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/streadway/amqp"
 )
 
@@ -15,12 +14,12 @@ var channel *amqp.Channel
 func Init() error {
 	var err error
 
-	if os.Getenv("ENV") != "production" {
-		err = godotenv.Load()
-		if err != nil {
-			log.Fatal("Error loading .env file")
-		}
-	}
+	// if os.Getenv("ENV") != "production" {
+	// 	err = godotenv.Load()
+	// 	if err != nil {
+	// 		log.Fatal("Error loading .env file")
+	// 	}
+	// }
 
 	url := os.Getenv("RABBITMQ_URL") // amqps://username:password@host/vhost
 	conn, err = amqp.Dial(url)
