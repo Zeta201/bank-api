@@ -5,7 +5,6 @@ type SignUpRequest struct {
 	LastName  string `json:"last_name" binding:"required"`
 	Email     string `json:"email" binding:"required,email"`
 	Password  string `json:"password" binding:"required,min=8"`
-	Phone     string `json:"phone" binding:"required"`
 }
 
 type AccountRequest struct {

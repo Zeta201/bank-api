@@ -8,6 +8,5 @@ type User struct {
 	LastName   string    `json:"last_name"`
 	Email      string    `json:"email" gorm:"unique;not null"`
 	Password   string    `json:"password"`
-	Phone      string    `json:"user_phone"`
 	Accounts   []Account `json:"accounts"`
 }

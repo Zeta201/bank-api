@@ -33,7 +33,6 @@ func SignUp(c *gin.Context) {
 		LastName:  req.LastName,
 		Email:     req.Email,
 		Password:  string(hashedPassword),
-		Phone:     req.Phone,
 	}
 
 	// Save user
