@@ -9,15 +9,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// @Summary      Sign up a new user
-// @Description  Register a new user in the banking system
-// @Tags         Auth
-// @Accept       json
-// @Produce      json
-// @Param        user  body      models.SignUpRequest  true  "User Info"
-// @Success      201   {object}  models.UserResponse
-// @Failure      400   {object}  models.ErrorResponse
-// @Router       /signup [post]
 func SignUp(c *gin.Context) {
 	var req models.SignUpRequest
 
@@ -42,6 +33,7 @@ func SignUp(c *gin.Context) {
 		LastName:  req.LastName,
 		Email:     req.Email,
 		Password:  string(hashedPassword),
+		Phone:     req.Phone,
 	}
 
 	// Save user
@@ -72,17 +64,6 @@ func SignUp(c *gin.Context) {
 	)
 }
 
-// @Summary      Login a user
-// @Description  Login a user in the banking system
-// @Tags         Auth
-// @Accept       json
-// @Produce      json
-// @Param        user  body      models.LoginRequest  true  "Login credentials"
-// @Success 	 200   {object}  models.LoginResponse
-// @Failure      400   {object}  models.ErrorResponse
-// @Failure      401   {object}  models.ErrorResponse
-// @Failure      500   {object}  models.ErrorResponse
-// @Router       /login [post]
 func Login(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -3,6 +3,7 @@ package handlers
 import (
 	"bank-app/config"
 	"bank-app/models"
+	"bank-app/rabbitmq"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -21,18 +22,6 @@ func GenerateUniqueAccountNumber() string {
 	}
 }
 
-// @Summary      Create a new bank account
-// @Description  Creates a new savings or checking account for the authenticated user
-// @Tags         Accounts
-// @Accept       json
-// @Produce      json
-// @Param        account  body      models.AccountRequest           true  "Account details"
-// @Success      201      {object}  models.AccountCreatedResponse
-// @Failure      400      {object}  models.ErrorResponse
-// @Failure      404      {object}  models.ErrorResponse
-// @Failure      500      {object}  models.ErrorResponse
-// @Security     BearerAuth
-// @Router       /accounts [post]
 func CreateAccount(c *gin.Context) {
 	var accountRequest models.AccountRequest
 
@@ -103,11 +92,18 @@ func CreateAccount(c *gin.Context) {
 // @Router       /accounts/{account_no}/deposit [post]
 func Deposit(c *gin.Context) {
 	accountNo := c.Param("account_no")
-
+	userID := c.MustGet("userID").(uint)
 	var request models.TransactionRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Message: "Invalid amount"})
+		return
+	}
+
+	// Retrieve the user to get phone number (or email)
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to fetch user info"})
 		return
 	}
 
@@ -137,6 +133,16 @@ func Deposit(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to log transaction"})
 		return
 	}
+
+	_ = rabbitmq.Publish(map[string]interface{}{
+		"type":      "deposit",
+		"status":    "success",
+		"user_id":   account.UserID,
+		"amount":    request.Amount,
+		"accountNo": account.AccountNo,
+		"timestamp": time.Now().UTC(),
+		"to_email":  user.Email,
+	})
 
 	c.JSON(http.StatusOK, models.TransactionResponse{
 		Message: "Deposit successful",
@@ -168,6 +174,12 @@ func Withdraw(c *gin.Context) {
 
 	// Get authenticated user's ID from context
 	userID := c.MustGet("userID").(uint)
+
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to fetch user info"})
+		return
+	}
 
 	// Find the account AND ensure it belongs to the authenticated user
 	var account models.Account
@@ -203,27 +215,22 @@ func Withdraw(c *gin.Context) {
 		return
 	}
 
+	_ = rabbitmq.Publish(map[string]interface{}{
+		"type":      "withdraw",
+		"status":    "success",
+		"user_id":   account.UserID,
+		"amount":    request.Amount,
+		"accountNo": account.AccountNo,
+		"timestamp": time.Now().UTC(),
+		"to_email":  user.Email,
+	})
+
 	c.JSON(http.StatusOK, models.TransactionResponse{
 		Message: "Withdrawal successful",
 		Balance: account.Balance,
 	})
 }
 
-// @Summary      Transfer money between accounts
-// @Description  Transfer a specified amount from one account to another
-// @Tags         Transactions
-// @Accept       json
-// @Produce      json
-// @Param        from_account  path      string                     true  "Sender's account number"
-// @Param        to_account    path      string                     true  "Receiver's account number"
-// @Param        request       body      models.TransactionRequest  true  "Transfer amount"
-// @Success      200           {object}  models.TransactionResponse
-// @Failure      400           {object}  models.ErrorResponse
-// @Failure      403           {object}  models.ErrorResponse
-// @Failure      404           {object}  models.ErrorResponse
-// @Failure      500           {object}  models.ErrorResponse
-// @Security     BearerAuth
-// @Router       /accounts/{from_account}/transfer/{to_account} [post]
 func Transfer(c *gin.Context) {
 	fromAccountNo := c.Param("from_account")
 	toAccountNo := c.Param("to_account")
@@ -236,6 +243,12 @@ func Transfer(c *gin.Context) {
 	}
 
 	userID := c.MustGet("userID").(uint)
+
+	var sender models.User
+	if err := config.DB.First(&sender, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to fetch user info"})
+		return
+	}
 
 	// Ensure the 'from' account belongs to the logged-in user
 	var fromAccount models.Account
@@ -314,6 +327,33 @@ func Transfer(c *gin.Context) {
 
 	// Commit transaction
 	tx.Commit()
+
+	var receiver models.User
+	if err := config.DB.First(&receiver, toAccount.UserID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to fetch receiver info"})
+		return
+	}
+	_ = rabbitmq.Publish(map[string]interface{}{
+		"type":      "transfer_sent",
+		"status":    "success",
+		"user_id":   fromAccount.UserID,
+		"amount":    request.Amount,
+		"from":      fromAccount.AccountNo,
+		"to":        toAccount.AccountNo,
+		"timestamp": time.Now().UTC(),
+		"to_email":  sender.Email,
+	})
+
+	_ = rabbitmq.Publish(map[string]interface{}{
+		"type":      "transfer_received",
+		"status":    "success",
+		"user_id":   toAccount.UserID,
+		"amount":    request.Amount,
+		"from":      fromAccount.AccountNo,
+		"to":        toAccount.AccountNo,
+		"timestamp": time.Now().UTC(),
+		"to_email":  receiver.Email,
+	})
 
 	c.JSON(http.StatusOK, models.TransactionResponse{
 		Message: "Transfer successful",

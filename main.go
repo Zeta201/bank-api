@@ -4,21 +4,35 @@ import (
 	"bank-app/config"
 	"bank-app/handlers"
 	"bank-app/middleware"
+	"bank-app/rabbitmq"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
-// @title           Banking API
-// @version         1.0
-// @description     This is a banking system API for key banking operations.
-// @host            localhost:8080
-// @BasePath        /api/v1
+func init() {
+	// If running locally, you may still want to load the .env file.
+	// Uncomment the following lines if you want to keep godotenv loading for local development.
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
+	}
+}
+
 func main() {
 	// Connect to the database
 	config.ConnectDB()
 	defer config.CloseDB()
+
+	if err := rabbitmq.Init(); err != nil {
+		log.Fatalf("Failed to initialize RabbitMQ: %v", err)
+	}
+	defer rabbitmq.Close()
 
 	// Set up the Gin router
 	r := gin.Default()
