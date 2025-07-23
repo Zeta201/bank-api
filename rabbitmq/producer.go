@@ -49,7 +49,6 @@ func Publish(message interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	err = channel.Publish(
 		"",          // exchange
 		"TestQueue", // routing key

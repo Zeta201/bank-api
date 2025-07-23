@@ -11,6 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//	func init() {
+//		// If running locally, you may still want to load the .env file.
+//		// Uncomment the following lines if you want to keep godotenv loading for local development.
+//		if os.Getenv("ENV") != "production" {
+//			err := godotenv.Load()
+//			if err != nil {
+//				log.Fatal("Error loading .env file")
+//			}
+//		}
+//	}
 func main() {
 	// Connect to the database
 	config.ConnectDB()
@@ -41,6 +51,7 @@ func main() {
 
 	r.POST("/signup", handlers.SignUp)
 	r.POST("/login", handlers.Login)
+	r.GET("/transactions/summary", handlers.GetAllTransactionsSummary)
 
 	auth := r.Group("/")
 	auth.Use(middleware.JWTAuthMiddleware())
@@ -58,7 +69,6 @@ func main() {
 	// Update the transfer route to avoid conflict
 	auth.POST("/accounts/transfer/:from_account/:to_account", handlers.Transfer)
 
-	// auth.GET("/transactions", handlers.GetAllTransactions)
 	auth.GET("/transactions/:id", handlers.GetTransactionByID)
 	auth.GET("/users/:id/transactions", handlers.GetTransactionsByUserID)
 	auth.GET("/accounts/:account_no/transactions", handlers.GetTransactionsByAccountNo)
@@ -72,14 +82,3 @@ func main() {
 		log.Fatal("Failed to start server: ", err)
 	}
 }
-
-// func init() {
-// 	// If running locally, you may still want to load the .env file.
-// 	// Uncomment the following lines if you want to keep godotenv loading for local development.
-// 	if os.Getenv("ENV") != "production" {
-// 		err := godotenv.Load()
-// 		if err != nil {
-// 			log.Fatal("Error loading .env file")
-// 		}
-// 	}
-// }

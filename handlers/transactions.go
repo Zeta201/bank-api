@@ -9,13 +9,40 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-func GetAllTransactions(c *gin.Context) {
+func GetAllTransactionsSummary(c *gin.Context) {
 	var transactions []models.Transaction
 	if err := config.DB.Find(&transactions).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Message: "Failed to fetch transactions"})
 		return
 	}
-	c.JSON(http.StatusOK, transactions)
+
+	summary := make(map[string]interface{})
+	totalAmount := 0.0
+	byType := map[string]float64{}
+	byStatus := map[string]int{}
+	perDay := map[string]int{}
+
+	for _, tx := range transactions {
+		totalAmount += tx.Amount
+
+		// By type
+		byType[tx.TransactionType] += tx.Amount
+
+		// By status
+		byStatus[tx.Status]++
+
+		// Per day
+		day := tx.TransactionDate.Format("2006-01-02")
+		perDay[day]++
+	}
+
+	summary["total_transactions"] = len(transactions)
+	summary["total_amount"] = totalAmount
+	summary["by_type"] = byType
+	summary["by_status"] = byStatus
+	summary["transactions_per_day"] = perDay
+
+	c.JSON(http.StatusOK, summary)
 }
 
 // @Summary      Get transaction by ID
